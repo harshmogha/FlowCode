@@ -1,0 +1,28 @@
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local data and secrets (never commit)
+*.db
+*.sqlite3
+.env
+.env.*
+database/ai_settings.json
+
+# Editor / IDE
+.vscode/
+.idea/
+.kiro/
+
+# Logs and OS files
+*.log
+.DS_Store
+Thumbs.db

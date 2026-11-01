@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FlowCode</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/katex/katex.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand" aria-label="FlowCode">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">FlowCode</span>
+    </div>
+    <nav class="menu" aria-label="Project menu">
+      <button type="button" class="btn btn-text" id="btn-new">New</button>
+      <button type="button" class="btn btn-text" id="btn-save">Save</button>
+      <button type="button" class="btn btn-text" id="btn-load">Load</button>
+      <button type="button" class="btn btn-text" id="btn-ai-settings">AI Settings</button>
+      <div class="dropdown">
+        <button type="button" class="btn btn-text" id="btn-export" aria-haspopup="true" aria-expanded="false">Export &#9662;</button>
+        <div class="dropdown-menu" id="export-menu" hidden>
+          <button type="button" data-export="code">Download code</button>
+          <button type="button" data-export="json">Download flowchart (.json)</button>
+        </div>
+      </div>
+    </nav>
+    <div class="spacer"></div>
+    <label class="field-inline">Project
+      <input type="text" id="project-name" value="Even or odd" maxlength="100">
+    </label>
+    <label class="field-inline">Language
+      <select id="language">
+        <option value="python">Python</option>
+        <option value="java">Java (AI)</option>
+        <option value="cpp">C++ (AI)</option>
+      </select>
+    </label>
+    <select id="ai-model" class="ai-model" aria-label="Model used for Java and C++" title="Model used for Java and C++" hidden></select>
+    <button type="button" class="ai-badge" id="ai-status" title="Open AI Settings">AI: checking...</button>
+    <button type="button" class="btn btn-primary" id="btn-generate">Generate Code</button>
+    <button type="button" class="btn btn-dark" id="btn-run">Run Code</button>
+  </header>
+
+  <main class="layout">
+    <aside class="panel palette" aria-label="Flowchart components">
+      <h2 class="panel-title">Flowchart Components</h2>
+      <p class="palette-hint">Drag onto the canvas, or click to add.</p>
+      <ul class="palette-list" id="palette">
+        <li><button type="button" class="palette-item" draggable="true" data-type="start"><span class="pi pi-start"></span>Start</button></li>
+        <li><button type="button" class="palette-item" draggable="true" data-type="end"><span class="pi pi-end"></span>End</button></li>
+        <li><button type="button" class="palette-item" draggable="true" data-type="input"><span class="pi pi-input"></span>Input</button></li>
+        <li><button type="button" class="palette-item" draggable="true" data-type="output"><span class="pi pi-output"></span>Output</button></li>
+        <li><button type="button" class="palette-item" draggable="true" data-type="process"><span class="pi pi-process"></span>Process</button></li>
+        <li><button type="button" class="palette-item" draggable="true" data-type="decision"><span class="pi pi-decision"></span>Decision</button></li>
+        <li><button type="button" class="palette-item" draggable="true" data-type="for"><span class="pi pi-loop"></span>Loop (For)</button></li>
+        <li><button type="button" class="palette-item" draggable="true" data-type="while"><span class="pi pi-loop"></span>Loop (While)</button></li>
+      </ul>
+      <details class="help">
+        <summary>How to connect</summary>
+        <p>Drag from any small dot on a block to a dot on another block, in any direction (top, bottom, left or right). Dropping on the block itself also works.</p>
+        <p>Click an arrow to select it, then press Delete (or click the red X) to remove it. Select an arrow to change where it leaves and enters.</p>
+        <p>Loops: bottom dot = Body, left dot = Exit. Connect the last block of the body to the dot on the right side of the loop.</p>
+      </details>
+    </aside>
+
+    <section class="panel center" aria-label="Design area">
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab active" role="tab" data-tab="flowchart" aria-selected="true">Flowchart</button>
+        <button type="button" class="tab" role="tab" data-tab="algorithm" aria-selected="false">Algorithm (Text)</button>
+      </div>
+
+      <div class="view" id="view-flowchart">
+        <div class="canvas-toolbar">
+          <button type="button" class="btn btn-icon" id="btn-undo" title="Undo" aria-label="Undo">&#8630;</button>
+          <button type="button" class="btn btn-icon" id="btn-redo" title="Redo" aria-label="Redo">&#8631;</button>
+          <button type="button" class="btn btn-icon" id="btn-delete" title="Delete selected block" aria-label="Delete selected block">&#10005;</button>
+          <span class="toolbar-sep"></span>
+          <button type="button" class="btn btn-icon" id="btn-zoom-out" title="Zoom out" aria-label="Zoom out">&minus;</button>
+          <span class="zoom-label" id="zoom-label">100%</span>
+          <button type="button" class="btn btn-icon" id="btn-zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
+          <button type="button" class="btn btn-icon" id="btn-fit" title="Fit to screen" aria-label="Fit to screen">&#9635;</button>
+        </div>
+        <div class="canvas-wrap">
+          <div id="drawflow" aria-label="Flowchart canvas"></div>
+        </div>
+        <div class="problems" id="problems" hidden>
+          <div class="problems-head"><strong id="problems-title">Problems</strong>
+            <button type="button" class="btn btn-small" id="btn-problems-close">Close</button></div>
+          <ul id="problems-list"></ul>
+        </div>
+      </div>
+
+      <div class="view" id="view-algorithm" hidden>
+        <div class="algo-wrap">
+          <label for="algo-text" class="algo-label">Write your algorithm</label>
+          <div id="algo-ribbon"></div>
+          <div class="code-editor">
+            <pre id="algo-gutter" class="gutter" aria-hidden="true">1</pre>
+            <textarea id="algo-text" wrap="off" spellcheck="false" placeholder="START&#10;INPUT n : int &quot;Enter a number&quot;&#10;IF n mod 2 = 0 THEN&#10;    PRINT &quot;Even&quot;&#10;ELSE&#10;    PRINT &quot;Odd&quot;&#10;END IF&#10;END"></textarea>
+          </div>
+          <div class="algo-actions">
+            <button type="button" class="btn btn-primary" id="btn-build">Build Flowchart</button>
+            <span class="muted" id="algo-status"></span>
+          </div>
+          <div id="algo-preview"></div>
+          <section class="syntax-panel" id="syntax-panel" aria-live="polite">
+            <div class="syntax-head" id="syntax-head">Syntax check</div>
+            <ul class="syntax-list" id="algo-errors"></ul>
+          </section>          <details class="help">
+            <summary>Writing guide</summary>
+            <pre class="guide">START
+INPUT n : int "Enter a number"   types: int, float, text, list, floatlist
+INPUT a, b, c : int "Three numbers"   fixed number of values on one line (space, comma or / between)
+INPUT nums : list "Many numbers"   any number of values, kept in a list
+SET total = total + n            (also:  total &lt;- total + n)
+PRINT "Sum is", total
+IF n mod 2 = 0 THEN
+    ...
+ELSE
+    ...
+END IF                           (ELSE IF is allowed)
+WHILE n &gt; 0 DO
+    ...
+END WHILE
+FOR i FROM 1 TO n STEP 1 DO
+    ...
+END FOR
+END
+
+// a comment line above a step is that block's note (it becomes a # comment in the code).
+// Put formulas inside a note between $ signs:   // Roots: $x = (-b + sqrt(b^2 - 4*a*c)) / (2*a)$
+
+mod = remainder, div = whole-number division,
+= in a condition means "is equal to", ^ means power.
+Functions: sqrt, abs, floor, ceil, sin, cos, log, min, max, len ...</pre>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="right" aria-label="Details, code and output">
+      <div class="panel props" id="props-panel">
+        <h2 class="panel-title" id="props-title">Block Properties</h2>
+        <div id="props-body"><p class="muted">Click a block on the canvas to edit it.</p></div>
+      </div>
+
+      <div class="panel code-panel">
+        <div class="tabs tabs-small" role="tablist">
+          <button type="button" class="tab active" role="tab" data-ctab="code" aria-selected="true">Generated Code</button>
+          <button type="button" class="tab" role="tab" data-ctab="steps" aria-selected="false">Explanation</button>
+          <span class="spacer"></span>
+          <button type="button" class="btn btn-small" id="btn-copy">Copy</button>
+        </div>
+        <div class="code-note" id="code-note" hidden></div>
+        <textarea id="code" class="code-area" spellcheck="false" aria-label="Generated code" placeholder="Click &quot;Generate Code&quot; to see the code here."></textarea>
+        <ol class="steps" id="steps" hidden></ol>
+      </div>
+
+      <div class="panel output-panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Output</h2>
+          <span class="panel-actions">
+            <button type="button" class="btn btn-small btn-stop" id="btn-stop" hidden>Stop</button>
+            <button type="button" class="btn btn-small" id="btn-clear">Clear</button>
+          </span>
+        </div>
+        <div class="console-hint" id="console-hint">Click "Run Code". When the program asks for a value, type it in the console and press Enter.</div>
+        <div class="terminal" id="output" role="log" aria-live="polite" aria-label="Program console"><span id="term-text"></span><input type="text" id="term-input" class="term-input" autocomplete="off" spellcheck="false" aria-label="Type your answer and press Enter" hidden></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal" id="modal" hidden>
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-head"><h2 id="modal-title">Load</h2>
+        <button type="button" class="btn btn-small" id="modal-close">Close</button></div>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status" hidden></div>
+  <input type="file" id="file-input" accept=".json,application/json" hidden>
+
+  <script src="{{ url_for('static', filename='vendor/katex/katex.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/formula.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/flowchart.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
