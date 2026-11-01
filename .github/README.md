@@ -38,18 +38,6 @@ The core idea: **reliable conversion of an editable algorithm into executable co
 
 ## 🔄 How It Works
 
-```mermaid
-flowchart LR
-    A[🖱️ Flowchart Editor] --> C{{Intermediate<br/>Representation<br/>JSON}}
-    B[⌨️ Algorithm Text] --> C
-    C --> D[✅ Validator]
-    D --> E[⚙️ Deterministic<br/>Python Generator]
-    E --> F[🐍 Python Code]
-    F --> G[🤖 AI Translator<br/>optional]
-    G --> H[☕ Java / ⚡ C++]
-    F --> I[▶️ Safe Runner]
-```
-
 | Step | Stage | What happens |
 |------|-------|--------------|
 | 1 | Input | Draw blocks or type pseudocode |
@@ -325,10 +313,4 @@ Or double-click **`run_tests.bat`** on Windows.
 
 ---
 
-## 📜 License
 
-Released under the **MIT License** — add a `LICENSE` file before publishing. KaTeX is © its authors under the MIT License.
-
-<p align="center">
-  Made with ❤️ for the M.Tech Python Lab · If this helped you, give it a ⭐
-</p>
