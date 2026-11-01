@@ -535,12 +535,9 @@ Or double-click **`run_tests.bat`** on Windows.
 
 ---
 
-## 📜 License
-
-Released under the **MIT License**. KaTeX is © its authors, also under the MIT License.
 
 <p align="center">
-  <b>Made with ❤️ by <a href="https://github.com/harshmogha">Harsh Mogha</a> · M.Tech Python Lab</b><br/>
+  <b>Made with ❤️ by <a href="https://github.com/harshmogha">Harsh Mogha</b><br/>
   <sub>If FlowCode helped you, please give it a ⭐</sub>
 </p>
 
